@@ -223,6 +223,8 @@ public class BehaviorMecanim : MonoBehaviour
     }
 
 
+
+
     #endregion
 
     #endregion
@@ -232,6 +234,37 @@ public class BehaviorMecanim : MonoBehaviour
     /// <summary>
     /// Plays a gesture of a determined type for a given duration
     /// </summary>
+
+
+
+    ///OWN ADDITIONS
+    ///
+    public Node Node_Sit()
+    {
+        return new LeafInvoke(
+            this.Character.SitDown);
+
+    }
+
+
+    public Node Node_Stand()
+    {
+
+        return new LeafInvoke(
+            this.Character.StandUp);
+
+    }
+
+
+
+
+
+
+
+
+
+
+    ////
     public Node ST_PlayGesture(
         Val<string> gestureName,
         Val<AnimationLayer> layer,
