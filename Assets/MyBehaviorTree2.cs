@@ -6,6 +6,7 @@ using RootMotion.FinalIK;
 
 public class MyBehaviorTree2 : MonoBehaviour
 {
+    // Characters
     public GameObject dan;
     public GameObject jake;
     public GameObject robber;
@@ -43,9 +44,10 @@ public class MyBehaviorTree2 : MonoBehaviour
     public GameObject batobj;
     public GameObject buttonobj;
 
+
+
     private BehaviorAgent behaviorAgent;
 
-    Vector3 movedir = Vector3.zero;
 
     public GameObject Door;
     bool open;
@@ -63,7 +65,12 @@ public class MyBehaviorTree2 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       
+
+
+        //  if (open == true )
+        //   {
+        //      Door.transform.Translate(new Vector3(0f, -10f, 0f) );
+        //  }
     }
 
     protected Node ST_ApproachAndWait(Transform target)
@@ -194,9 +201,21 @@ public class MyBehaviorTree2 : MonoBehaviour
             );
     }
 
+
     protected Node BuildTreeRoot()
-	{
-        Node Story = new Sequence(
+    {
+        Val<Vector3> lookatbat = Val.V(() => batobj.transform.position);
+        Val<Vector3> lookatdan = Val.V(() => dan.transform.position);
+        Val<Vector3> lookatrob = Val.V(() => robber.transform.position);
+        Val<Vector3> lookatbut = Val.V(() => buttonobj.transform.position);
+        Val<Vector3> gohere = Val.V(() => buttonWaypoint2.transform.position);
+        Val<Vector3> lookatwall = Val.V(() => Wall.transform.position);
+
+        int num = RandomNumber(1, 3);
+        Debug.Log("NUM :" + num);
+        if (num == 1)
+        {
+            Node Story = new Sequence(
 
 
                         //NPC stuff
@@ -233,8 +252,264 @@ public class MyBehaviorTree2 : MonoBehaviour
                           npc3.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position),
                            npc4.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position),
                             npc5.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position)
-                        ));
-    return Story;
-        
-	}
+                        ),
+                            // Dan story
+
+                            this.ST_shakeHands(dan, jake, this.DanMeetsJake),
+                            new LeafWait(500),
+                            this.ST_GoSit(this.danSeat, this.jakeSeat, table),
+                            new LeafWait(500),
+                            new SequenceParallel(
+                            this.ST_Talk(),
+                            new LeafWait(100),
+                            robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(lookatbat),
+                            robber.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatbat),
+                            PickBat(robber, bat, batobj)
+                            ),
+                            // robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(lookattab),
+                            // robber.GetComponent<BehaviorMecanim>().Node_HeadLook(lookattab),
+
+                            this.ST_RobberEntry(RobberEntry),
+                            robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(lookatdan),
+                            robber.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatdan),
+                            new LeafWait(500),
+                            dan.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatrob),
+                            jake.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatrob),
+                            new LeafWait(10),
+                            new SequenceParallel(
+
+                                robber.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("pistolaim", 1400),
+                                dan.GetComponent<BehaviorMecanim>().Node_Stand(),
+                                jake.GetComponent<BehaviorMecanim>().Node_Stand()
+
+                            ),
+                            dan.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatbut),
+                            jake.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatbut),
+                            new SequenceParallel(
+                            robber.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("pistolaim", 7000),
+                            this.ST_OpenDoor(button, buttonWaypointdan, buttonWaypointjake)
+                            ),
+                            new SequenceParallel(
+                            dan.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatwall),
+                            jake.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatwall),
+                            dan.GetComponent<BehaviorMecanim>().Node_GoTo(gohere),
+                            jake.GetComponent<BehaviorMecanim>().Node_GoTo(gohere)
+                            ),
+
+                            new LeafWait(500),
+                            this.ST_Escape(escape),
+
+                            new LeafWait(100),
+                            dan.GetComponent<BehaviorMecanim>().Node_HeadLook(npcLookAt.transform.position),
+                            jake.GetComponent<BehaviorMecanim>().Node_HeadLook(npcLookAt.transform.position),
+                            new LeafWait(100),
+
+                            robber.GetComponent<BehaviorMecanim>().Node_HeadLookStop(),
+                            new LeafWait(200),
+                             robber.GetComponent<BehaviorMecanim>().Node_HeadLook(npc4.transform.position),
+
+                             new SequenceParallel(
+                            robber.GetComponent<BehaviorMecanim>().Node_GoTo(robbertheaterwaypoint.transform.position),
+                            dan.GetComponent<BehaviorMecanim>().Node_GoTo(exit.transform.position),
+                            jake.GetComponent<BehaviorMecanim>().Node_GoTo(exit.transform.position)
+                            ),
+
+                            new SequenceParallel(
+                            robber.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("pistolaim", 1400),
+                            new Sequence(
+                            new SequenceParallel(
+                        npc1.GetComponent<BehaviorMecanim>().Node_Stand(),
+                         npc2.GetComponent<BehaviorMecanim>().Node_Stand()
+                         ),
+                          npc3.GetComponent<BehaviorMecanim>().Node_Stand(),
+                          new SequenceParallel(
+                           npc4.GetComponent<BehaviorMecanim>().Node_Stand(),
+                            npc5.GetComponent<BehaviorMecanim>().Node_Stand()
+                        ),
+                          new LeafWait(300),
+                          npc1.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                         npc2.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                          npc3.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                         new SequenceParallel(
+                           npc4.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                            npc5.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position)
+                        )
+                        )
+                        ),
+
+                         new SequenceParallel(
+                            robber.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("pistolaim", 18500),
+                            npc1.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("HANDSUP", 18500),
+                            npc2.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("HANDSUP", 18500),
+                            npc3.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("HANDSUP", 18500),
+                            npc4.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("HANDSUP", 18500),
+                            npc5.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("HANDSUP", 15500)
+                            )
+
+
+                );
+            return Story;
+        }
+        else
+        {
+            Node Story = new Sequence(
+                        //NPC stuff
+
+                        new SequenceParallel(
+                        npc1.GetComponent<BehaviorMecanim>().Node_GoTo(npc1Seat.transform.position),
+                         npc2.GetComponent<BehaviorMecanim>().Node_GoTo(npc2Seat.transform.position),
+                          npc3.GetComponent<BehaviorMecanim>().Node_GoTo(npc3Seat.transform.position),
+                           npc4.GetComponent<BehaviorMecanim>().Node_GoTo(npc4Seat.transform.position),
+                            npc5.GetComponent<BehaviorMecanim>().Node_GoTo(npc5Seat.transform.position)
+                        ),
+
+                        npc1.GetComponent<BehaviorMecanim>().Node_OrientTowards(npcLookAt.transform.position),
+                         npc2.GetComponent<BehaviorMecanim>().Node_OrientTowards(npcLookAt.transform.position),
+                          npc3.GetComponent<BehaviorMecanim>().Node_OrientTowards(npcLookAt.transform.position),
+                         new SequenceParallel(
+                           npc4.GetComponent<BehaviorMecanim>().Node_OrientTowards(npcLookAt.transform.position),
+                            npc5.GetComponent<BehaviorMecanim>().Node_OrientTowards(npcLookAt.transform.position)
+                        ),
+
+
+                         new SequenceParallel(
+                        npc1.GetComponent<BehaviorMecanim>().Node_Sit(),
+                         npc2.GetComponent<BehaviorMecanim>().Node_Sit()
+                         ),
+                          npc3.GetComponent<BehaviorMecanim>().Node_Sit(),
+                          new SequenceParallel(
+                           npc4.GetComponent<BehaviorMecanim>().Node_Sit(),
+                            npc5.GetComponent<BehaviorMecanim>().Node_Sit()
+                        ),
+                         new SequenceParallel(
+                        npc1.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position),
+                         npc2.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position),
+                          npc3.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position),
+                           npc4.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position),
+                            npc5.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position)
+                        ),
+
+
+                             this.ST_shakeHands(dan, jake, this.DanMeetsJake),
+                             new LeafWait(500),
+                             //  this.ST_GoSit(this.danSeat, this.jakeSeat, table),
+                             //  new LeafWait(500),
+
+                             //  this.ST_Talk(),
+                             //  new LeafWait(100),
+
+                             dan.GetComponent<BehaviorMecanim>().Node_OrientTowards(danfindsrobber.transform.position),
+                             jake.GetComponent<BehaviorMecanim>().Node_OrientTowards(danfindsrobber.transform.position),
+                             new SequenceParallel(
+                             dan.GetComponent<BehaviorMecanim>().Node_GoTo(danfindsrobber.transform.position),
+                             jake.GetComponent<BehaviorMecanim>().Node_GoTo(danfindsrobber.transform.position)),
+
+                             new LeafWait(100),
+                             new SequenceParallel(
+                             dan.GetComponent<BehaviorMecanim>().Node_HeadLook(robber.transform.position),
+                             jake.GetComponent<BehaviorMecanim>().Node_HeadLook(robber.transform.position)),
+
+                             dan.GetComponent<BehaviorMecanim>().Node_OrientTowards(lookatbut),
+                             jake.GetComponent<BehaviorMecanim>().Node_OrientTowards(lookatbut),
+
+                              dan.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatbut),
+                             jake.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatbut),
+
+                             new LeafWait(100),
+                                this.ST_OpenDoor(button, buttonWaypointdan, buttonWaypointjake),
+
+                             new SequenceParallel(
+                             dan.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatwall),
+                             jake.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatwall),
+                             dan.GetComponent<BehaviorMecanim>().Node_GoTo(gohere),
+                             jake.GetComponent<BehaviorMecanim>().Node_GoTo(gohere)
+                             ),
+
+                             new LeafWait(500),
+                             this.ST_Escape(escape),
+                             new LeafWait(100),
+
+                             new SequenceParallel(
+                                 new Sequence(
+                             dan.GetComponent<BehaviorMecanim>().Node_GoTo(robbertheaterwaypoint.transform.position),
+                             dan.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("CROWDPUMP", 1500)),
+                             jake.GetComponent<BehaviorMecanim>().Node_GoTo(exit.transform.position)),
+
+                             dan.GetComponent<BehaviorMecanim>().Node_HeadLook(npc4Seat.transform.position),
+
+                           new SequenceParallel(
+                            dan.GetComponent<BehaviorMecanim>().ST_PlayHandGesture("CROWDPUMP", 4500),
+
+                            // Npc getting up
+                            new Sequence(
+                            npc1.GetComponent<BehaviorMecanim>().Node_HeadLook(robbertheaterwaypoint.transform.position),
+                         npc2.GetComponent<BehaviorMecanim>().Node_HeadLook(robbertheaterwaypoint.transform.position),
+                          npc3.GetComponent<BehaviorMecanim>().Node_HeadLook(robbertheaterwaypoint.transform.position),
+                         new SequenceParallel(
+                           npc4.GetComponent<BehaviorMecanim>().Node_HeadLook(robbertheaterwaypoint.transform.position),
+                            npc5.GetComponent<BehaviorMecanim>().Node_HeadLook(robbertheaterwaypoint.transform.position)
+                        ),
+
+                          new SequenceParallel(
+                        npc1.GetComponent<BehaviorMecanim>().Node_Stand(),
+                         npc2.GetComponent<BehaviorMecanim>().Node_Stand()
+                         ),
+                          npc3.GetComponent<BehaviorMecanim>().Node_Stand(),
+                          new SequenceParallel(
+                           npc4.GetComponent<BehaviorMecanim>().Node_Stand(),
+                            npc5.GetComponent<BehaviorMecanim>().Node_Stand()
+                        )
+                          )), // sequence end
+
+                          npc1.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                         npc2.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                          npc3.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                         new SequenceParallel(
+                           npc4.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                            npc5.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position)
+                        ),
+
+                         new SequenceParallel(
+                        npc1.GetComponent<BehaviorMecanim>().Node_GoTo(npc1.transform.position),
+                         npc2.GetComponent<BehaviorMecanim>().Node_GoTo(npc2.transform.position),
+                          npc3.GetComponent<BehaviorMecanim>().Node_GoTo(npc3.transform.position),
+                           npc4.GetComponent<BehaviorMecanim>().Node_GoTo(npc4.transform.position),
+                            npc5.GetComponent<BehaviorMecanim>().Node_GoTo(npc5.transform.position),
+                            dan.GetComponent<BehaviorMecanim>().Node_GoTo(exit.transform.position)
+                        ),
+
+            // robber coming
+                             robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(lookatbat),
+                             robber.GetComponent<BehaviorMecanim>().Node_HeadLook(lookatbat),
+                             PickBat(robber, bat, batobj),
+
+                             // robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(lookattab),
+                             // robber.GetComponent<BehaviorMecanim>().Node_HeadLook(lookattab),
+
+                             this.ST_RobberEntry(RobberEntry),
+                             robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(table.transform.position),
+
+                             robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(robbertheaterwaypoint.transform.position),
+                             robber.GetComponent<BehaviorMecanim>().Node_GoTo(robbertheaterwaypoint.transform.position),
+                             robber.GetComponent<BehaviorMecanim>().Node_HeadLook(TV.transform.position),
+                             new LeafWait(2000),
+                              robber.GetComponent<BehaviorMecanim>().Node_GoTo(npc4Seat.transform.position),
+                               robber.GetComponent<BehaviorMecanim>().Node_OrientTowards(npcLookAt.transform.position),
+                               robber.GetComponent<BehaviorMecanim>().Node_Sit(),
+
+
+                               new LeafWait(15000)
+
+
+
+                 );
+            return Story;
+        }
+    }
+
+    public int RandomNumber(int min, int max)
+    {
+        System.Random random = new System.Random();
+        return random.Next(min, max);
+    }
 }
